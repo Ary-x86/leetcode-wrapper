@@ -1,0 +1,29 @@
+{
+  "name": "Leetcode-Wrapper",
+  "version": "1.0.0",
+  "description": "Desktop wrapper for LeetCode with restricted browsing",
+  "main": "main.js",
+  "author": {
+    "name": "Aryan",
+    "email": "aryanswamipersaud09@gmail.com"
+  },
+  "homepage": "https://leetcode.com",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --linux rpm"
+  },
+  "build": {
+    "appId": "com.aryan.leetcode",
+    "productName": "LeetCode",
+    "linux": {
+      "target": ["rpm"],
+      "icon": "icon.png",
+      "category": "Development",
+      "maintainer": "Aryan <aryanswamipersaud09@gmail.com>"
+    }
+  },
+  "devDependencies": {
+    "electron": "^25.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}
