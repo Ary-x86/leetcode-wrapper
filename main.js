@@ -1,7 +1,18 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-const ALLOWED_DOMAINS = ['leetcode.com', 'challenges.cloudflare.com'];
+//const ALLOWED_DOMAINS = ['leetcode.com', 'challenges.cloudflare.com'];
+const ALLOWED_DOMAINS = [
+  'leetcode.com',
+  'challenges.cloudflare.com',
+
+  //Google (OAuth) domains
+  'accounts.google.com',
+  'accounts.googleusercontent.com',
+  'oauth2.googleapis.com',
+  'www.googleapis.com',
+];
+
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -16,18 +27,55 @@ function createWindow() {
     }
   });
 
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    const host = new URL(url).host;
+    if (ALLOWED_DOMAINS.some(d => host.endsWith(d))) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          parent: win,
+          modal: true,
+          webPreferences: {
+            partition: 'persist:leetcode-session',
+            nodeIntegration: false,
+            contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js')
+          }
+        }
+      };
+    }
+    return { action: 'deny' };
+  });
+  
+
+  // block  navigation  outside leetcode but allow cloudflare with ALLOWED DOMAINS
+  // win.webContents.session.webRequest.onBeforeRequest(
+  //   { urls: ['*://*/*'] },
+  //   (details, callback) => {
+  //     const url = new URL(details.url);
+  //     if (ALLOWED_DOMAINS.some(domain => url.host.endsWith(domain))) {
+  //       callback({ cancel: false });
+  //     } else {
+  //       callback({ cancel: true });
+  //     }
+  //   }
+  // );
+ 
+  
+
   // block  navigation  outside leetcode but allow cloudflare with ALLOWED DOMAINS
   win.webContents.session.webRequest.onBeforeRequest(
-    { urls: ['*://*/*'] },
-    (details, callback) => {
-      const url = new URL(details.url);
-      if (ALLOWED_DOMAINS.some(domain => url.host.endsWith(domain))) {
-        callback({ cancel: false });
-      } else {
-        callback({ cancel: true });
-      }
+  { urls: ['*://*/*'] },
+  (details, callback) => {
+    const host = new URL(details.url).host;
+    if (ALLOWED_DOMAINS.some(d => host.endsWith(d))) {
+      callback({ cancel: false });
+    } else {
+      callback({ cancel: true });
     }
-  );
+  }
+);
+
 
   // Disable DevTools shortcuts
   win.webContents.on('before-input-event', (event, input) => {
