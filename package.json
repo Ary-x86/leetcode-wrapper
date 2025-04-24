@@ -1,6 +1,6 @@
 {
   "name": "Leetcode-Wrapper",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Desktop wrapper for LeetCode with restricted browsing",
   "main": "main.js",
   "author": {
@@ -20,6 +20,10 @@
       "icon": "icon.png",
       "category": "Development",
       "maintainer": "Aryan <aryanswamipersaud09@gmail.com>"
+    },
+    "rpm": {
+      "afterInstall": "scripts/post-install.sh",
+      "afterRemove":  "scripts/post-remove.sh"
     }
   },
   "devDependencies": {
