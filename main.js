@@ -37,7 +37,7 @@ function createWindow() {
     width: 1024,
     height: 768,
     autoHideMenuBar: true,
-    title: 'LeetCode',
+    title: 'LeetCode Desktop',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -72,6 +72,11 @@ function createWindow() {
 
   // disable DevTools + right-click
   win.webContents.on('before-input-event', (e, i) => {
+    if (i.key === 'F11') {
+      win.setFullScreen(!win.isFullScreen());
+      e.preventDefault();
+      return;
+    }
     if (i.control && i.shift && i.key.toLowerCase() === 'i') e.preventDefault();
   });
   win.webContents.on('context-menu', e => e.preventDefault());
