@@ -1,24 +1,43 @@
+// main.js
+// author: Aryan
+
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
+const { URL } = require('url');
 
-//const ALLOWED_DOMAINS = ['leetcode.com', 'challenges.cloudflare.com'];
 const ALLOWED_DOMAINS = [
   'leetcode.com',
   'challenges.cloudflare.com',
 
-  //Google (OAuth) domains
-  'accounts.google.com',
-  'accounts.googleusercontent.com',
+  // Google OAuth & related (chatGPT generated, might not work for everyone)
+  'google.com',
+  'google.nl',           // covers accounts.google.nl
+  'youtube.com',         // covers accounts.youtube.com
+  'googleusercontent.com',
+  'gstatic.com',         // static assets
   'oauth2.googleapis.com',
   'www.googleapis.com',
+  'accounts.google.com',
+  'accounts.youtube.com',
+  'fonts.googleapis.com', 
+  'fonts.gstatic.com'
 ];
 
+function isAllowed(urlString) {
+  try {
+    const host = new URL(urlString).host;
+    return ALLOWED_DOMAINS.some(domain => host.endsWith(domain));
+  } catch {
+    return false;
+  }
+}
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 1024,
     height: 768,
     autoHideMenuBar: true,
+    title: 'LeetCode',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -27,64 +46,35 @@ function createWindow() {
     }
   });
 
+  // allow Google OAuth pop-ups, only for allowed domains
   win.webContents.setWindowOpenHandler(({ url }) => {
-    const host = new URL(url).host;
-    if (ALLOWED_DOMAINS.some(d => host.endsWith(d))) {
+    if (isAllowed(url)) {
       return {
         action: 'allow',
         overrideBrowserWindowOptions: {
           parent: win,
+          // you can drop modal: true, TOGGLE normal window
           modal: true,
-          webPreferences: {
-            partition: 'persist:leetcode-session',
-            nodeIntegration: false,
-            contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js')
-          }
+          webPreferences: win.webPreferences
         }
       };
     }
     return { action: 'deny' };
   });
-  
 
-  // block  navigation  outside leetcode but allow cloudflare with ALLOWED DOMAINS
-  // win.webContents.session.webRequest.onBeforeRequest(
-  //   { urls: ['*://*/*'] },
-  //   (details, callback) => {
-  //     const url = new URL(details.url);
-  //     if (ALLOWED_DOMAINS.some(domain => url.host.endsWith(domain))) {
-  //       callback({ cancel: false });
-  //     } else {
-  //       callback({ cancel: true });
-  //     }
-  //   }
-  // );
- 
-  
-
-  // block  navigation  outside leetcode but allow cloudflare with ALLOWED DOMAINS
+  // block all navigations except the whitelist
   win.webContents.session.webRequest.onBeforeRequest(
-  { urls: ['*://*/*'] },
-  (details, callback) => {
-    const host = new URL(details.url).host;
-    if (ALLOWED_DOMAINS.some(d => host.endsWith(d))) {
-      callback({ cancel: false });
-    } else {
-      callback({ cancel: true });
+    { urls: ['*://*/*'] },
+    (details, callback) => {
+      callback({ cancel: !isAllowed(details.url) });
     }
-  }
-);
+  );
 
-
-  // Disable DevTools shortcuts
-  win.webContents.on('before-input-event', (event, input) => {
-    if (input.control && input.shift && input.key.toLowerCase() === 'i') {
-      event.preventDefault();
-    }
+  // disable DevTools + right-click
+  win.webContents.on('before-input-event', (e, i) => {
+    if (i.control && i.shift && i.key.toLowerCase() === 'i') e.preventDefault();
   });
-  // Disable right-click context menu
-  win.webContents.on('context-menu', (e) => e.preventDefault());
+  win.webContents.on('context-menu', e => e.preventDefault());
 
   win.loadURL('https://leetcode.com');
 }
